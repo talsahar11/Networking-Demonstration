@@ -1,0 +1,80 @@
+version: "3"
+
+services:
+    DNS-Server:
+        mac_address: 2a:5c:01:3b:15:02
+        image: handsonsecurity/seed-ubuntu:large
+        container_name: DNS-Server
+        tty: true
+        cap_add:
+                - ALL
+        networks:
+            net-10.9.0.0:
+                ipv4_address: 10.9.0.53
+        volumes:
+                - ./volumes:/volumes
+        command: bash -c "
+                      pip install netifaces && pip install dnspython && /etc/init.d/openbsd-inetd start  &&
+                      tail -f /dev/null
+                      "
+                      
+    DHCP-Server:
+        image: handsonsecurity/seed-ubuntu:large
+        container_name: DHCP-Server
+        tty: true
+        cap_add:
+                - ALL
+        networks:
+            net-10.9.0.0:
+                ipv4_address: 10.9.0.127
+        volumes:
+                - ./volumes:/volumes
+        command: bash -c "
+                      pip install netifaces && pip install dnspython && /etc/init.d/openbsd-inetd start  &&
+                      tail -f /dev/null
+                 "
+
+
+    Client:
+        image: handsonsecurity/seed-ubuntu:large
+        container_name: Client
+        tty: true
+        cap_add:
+                - ALL
+        networks:
+            net-10.9.0.0:
+
+        volumes:
+                - ./volumes:/volumes
+        command: bash -c "
+                      apt-get update && pip install mysql-connector-python && pip install dnspython && pip install netifaces && /etc/init.d/openbsd-inetd start  &&
+                      tail -f /dev/null
+                 "
+    
+    
+    db:
+       image: mysql_image:latest
+       mac_address: 2a:5c:01:3b:1b:02
+       container_name: Database
+       command: --default-authentication-plugin=caching_sha2_password
+       restart: always
+       environment:
+         MYSQL_ROOT_PASSWORD: examplepassword
+         MYSQL_DATABASE: exampledb
+         MYSQL_USER: ts
+         MYSQL_PASSWORD: adminpass
+       tty: true
+       cap_add:
+         - ALL
+       networks:
+         net-10.9.0.0:
+           ipv4_address: 10.9.0.3
+       volumes:
+         - ./volumes:/volumes
+     
+networks:
+  net-10.9.0.0:
+    ipam:
+      config:
+        - subnet: 10.9.0.0/24
+
